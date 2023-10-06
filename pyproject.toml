@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "neural-networks"
+name = "nexum"
 version = "0.2.0"
 description = ""
 authors = ["Blackgolyb <andrejomelnickij@gmail.com>"]
 readme = "README.md"
 packages = [
-    { include = "neural_network" },
+    { include = "nexum" },
 ]
 
 [tool.poetry.dependencies]

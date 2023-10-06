@@ -2,8 +2,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from services.neural_network import NeuralNetwork
-from neural_network.core.neural_network import Perceptron
+from nexum.core.models import Perceptron
 
 
 def nne(values, w1, w2, w3):
@@ -34,7 +33,7 @@ def test_split_line():
     results = []
 
     for i in range(input_data.shape[0]):
-        result = nn.feat_forward(input_data[i])[0]
+        result = nn.predict(input_data[i])[0]
         result = int(result >= 0.5)
         print(f"data: {input_data[i]}  {result=}")
         results.append(result)

@@ -2,17 +2,17 @@ import pytest
 import numpy as np
 
 
-from neural_network.core.layers import (
+from nexum.core.layers import (
     FullConnectedLayer,
     OutputLayer,
 )
-from neural_network.core.activation_functions import (
+from nexum.core.activation_functions import (
     ActivationFunctions,
     Sigmoid,
     Custom,
     CustomActivationFuncHasNoInitializationFuncError,
 )
-from neural_network.core.initialization_functions import (
+from nexum.core.initialization_functions import (
     InitializationFunctions,
     xavier_init,
 )

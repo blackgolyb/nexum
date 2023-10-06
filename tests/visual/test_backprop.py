@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
-from neural_network.core.neural_network import Perceptron
-from neural_network.core.layers import OutputLayer
+from nexum.core.models import Perceptron
+from nexum.core.layers import OutputLayer
 
 
 def plot_split_line_image(nn, image_range, n=10, margins=2):
@@ -40,7 +40,7 @@ def plot_split_line_image(nn, image_range, n=10, margins=2):
         for j in range(size[1]):
             x = (xmax - xmin) / size[0] * i + xmin
             y = (ymax - ymin) / size[1] * j + ymin
-            image[size[1] - 1 - j][i] = color(lim(nn.feat_forward(np.array([x, y]))[0]))
+            image[size[1] - 1 - j][i] = color(lim(nn.predict(np.array([x, y]))[0]))
 
     plt.imshow(
         image,
@@ -125,7 +125,7 @@ def test_backprop():
     # results = []
 
     # for i in range(input_data.shape[0]):
-    #     result = nn.feat_forward(input_data[i])[0]
+    #     result = nn.predict(input_data[i])[0]
     #     result = int(result >= 0.5)
     #     print(f"data: {input_data[i]}  {result=}")
     #     results.append(result)
@@ -143,7 +143,7 @@ def test_backprop():
     results = []
 
     for i in range(input_data.shape[0]):
-        result = nn.feat_forward(input_data[i])[0]
+        result = nn.predict(input_data[i])[0]
         result = int(result >= 0.5)
         print(f"data: {input_data[i]}  {result=}")
         results.append(result)
