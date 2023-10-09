@@ -1,5 +1,6 @@
-import sys
-import time
+from enum import Enum
+
+import numpy as np
 
 from nexum.core.layers import (
     BaseLayer,
@@ -9,75 +10,25 @@ from nexum.core.layers import (
     ConnectionTypes,
 )
 from nexum.services.utils import accuracy_score
-
-import numpy as np
-
-
-class IterationLogger(object):
-    progress_bar_len = 30
-    modules_separator = " "
-    log_long_in_long_format = False
-    iteration_and_progress_bar_fmt = "{iterations} {bar}"
-
-    def __init__(self, modules):
-        self.modules = modules
-        self.prev_modules_string = ""
-
-    @staticmethod
-    def iterations(iteration, n_iterations):
-        return f"%{len(str(n_iterations))}d/{n_iterations}" % iteration
-
-    @classmethod
-    def progress_bar(cls, iteration, n_iterations, progress_bar_len=None):
-        if progress_bar_len is None:
-            progress_bar_len = cls.progress_bar_len
-
-        bar_progress = int(iteration / n_iterations * progress_bar_len)
-
-        bar_processed = "=" * bar_progress
-        if bar_progress == 0:
-            bar_processed = ""
-        elif bar_progress != progress_bar_len:
-            bar_processed = f"{bar_processed[:-1]}>"
-
-        return f"[{bar_processed}{'.'*(progress_bar_len - bar_progress)}]"
-
-    @classmethod
-    def iteration_and_progress_bar(cls, iteration, n_iterations, **kwargs):
-        iterations = cls.iterations(iteration, n_iterations)
-        bar = cls.progress_bar(iteration, n_iterations, **kwargs)
-        return cls.iteration_and_progress_bar_fmt.format(iterations=iterations, bar=bar)
-
-    def log_iteration(self, **modules_data):
-        modules = []
-        for module_name in self.modules:
-            module_data = modules_data.get(module_name, None)
-            if module_data is not None:
-                modules.append(self.modules[module_name](**module_data))
-
-        modules_string = self.modules_separator.join(modules)
-
-        if not self.log_long_in_long_format:
-            addition_symbols = " " * max(
-                len(self.prev_modules_string) - len(modules_string), 0
-            )
-            sys.stdout.write(f"\r{modules_string}{addition_symbols}")
-        else:
-            print(modules_string)
-
-        self.prev_modules_string = modules_string
+from nexum.services.enums import EnumMeta
+from nexum.services.iteration_logger import IterationLogger
 
 
 class WrongLayerTypeError(TypeError):
     ...
 
 
-class NNIterationLogger(IterationLogger):
+class LoggingEnum(Enum, metaclass=EnumMeta):
+    ALL = "all"
+    EPOCHS = "epochs"
+    OFF = "off"
+
+
+class BatchLogger(IterationLogger):
     modules_separator = " - "
 
     def __init__(self):
         modules = {
-            "iterations_bar": self.iteration_and_progress_bar,
             "took_time": self.took_time,
             "accuracy": self.accuracy,
         }
@@ -85,23 +36,21 @@ class NNIterationLogger(IterationLogger):
         super().__init__(modules=modules)
 
     @staticmethod
-    def took_time(iteration, n_iterations, took_time):
-        s = int(took_time)
-        us = int((took_time * 100) % 100)
-        if iteration != n_iterations:
-            return f"ETA: {s}s {us}us"
-        else:
-            return f"{s}s {us}us/sample"
-
-    @staticmethod
     def accuracy(accuracy):
         return f"accuracy: {accuracy:.5f}"
 
 
+class EpochLogger(IterationLogger):
+    desc = "Epochs: "
+
+
 class Perceptron:
+    logging = LoggingEnum.EPOCHS
+
     def __init__(self, layers_config: list[int | BaseLayer]):
         self.layers: list[int | BaseLayer]
-        self.iteration_logger = NNIterationLogger()
+        self.batch_logger = BatchLogger()
+        self.epoch_logger = EpochLogger()
         self._init_layers(layers_config)
 
     @property
@@ -116,13 +65,16 @@ class Perceptron:
     def _init_layers(self, config: list[int | BaseLayer]):
         self.layers = []
 
+        def get_layer_cls(*args, **kwargs):
+            return OutputLayer(
+                *args, connection_type=ConnectionTypes.FULL_CONNECTED, **kwargs
+            )
+
         for i, item in enumerate(config):
             if i == 0:
                 layer_cls = InputLayer
             elif i == len(config) - 1:
-                layer_cls = lambda *args, **kwargs: OutputLayer(
-                    *args, connection_type=ConnectionTypes.FULL_CONNECTED, **kwargs
-                )
+                layer_cls = get_layer_cls
             else:
                 layer_cls = FullConnectedLayer
 
@@ -152,37 +104,23 @@ class Perceptron:
         for layer in self.layers:
             layer.save_data = value
 
-    def _on_save_data_in_layers(self):
-        for layer in self.layers:
-            layer.save_data = True
+    def finalize(self, values):
+        return values
 
-    def _off_save_data_in_layers(self):
-        for layer in self.layers:
-            layer.save_data = False
-
-    def predict(self, value):
+    def predict(self, value, finalize=True):
         self.layers[0].setup_input(value)
-        return self.layers[-1].calculate()
+        result = self.layers[-1].calculate()
 
-    def log_training_progress(
-        self, iteration, n_iterations, took_time=0, accuracy=None
-    ):
-        if accuracy is not None:
-            accuracy = {
-                "accuracy": accuracy,
-            }
-        self.iteration_logger.log_iteration(
-            iterations_bar={
-                "iteration": iteration,
-                "n_iterations": n_iterations,
-            },
-            took_time={
-                "iteration": iteration,
-                "n_iterations": n_iterations,
-                "took_time": took_time,
-            },
-            accuracy=accuracy,
+        if finalize:
+            result = self.finalize(result)
+
+        return result
+
+    def log_training_progress(self, i, targets, results, training_data):
+        self.batch_logger.ds.accuracy = accuracy_score(
+            targets[: i + 1], results[: i + 1]
         )
+        # self.batch_logger.ds.accuracy = i
 
     def back_propagation_iteration(self, results, target, learning_rate):
         layers_n = len(self.layers)
@@ -199,8 +137,12 @@ class Perceptron:
                 deltas = np.empty(current_layer.node_number)
 
                 for j in range(current_layer.node_number):
-                    deltas[j] = np.sum(next_layer.w[:, j] * next_layer.deltas)
-                    deltas[j] *= current_layer.train_function(next_layer.nodes)
+                    deltas[j] = np.sum(
+                        next_layer.w[:, j]
+                        * next_layer.deltas
+                        * current_layer.train_function(next_layer.nodes)
+                    )
+                    # deltas[j] *=
 
                 current_layer.deltas = deltas
 
@@ -218,13 +160,15 @@ class Perceptron:
     def back_propagation(self, training_data, targets, learning_rate, epochs):
         training_data = training_data.copy()
         targets = targets.copy()
-        all_took_time = 0
 
         self.save_data = True
 
-        for epoch in range(epochs):
-            print(f"Epoch {epoch+1}/{epochs}")
-            one_epoch_took_time = 0
+        epoch_range = range(epochs)
+        if self.logging in (LoggingEnum.ALL, LoggingEnum.EPOCHS):
+            epoch_range = self.epoch_logger(epoch_range, position=0)
+
+        for epoch in epoch_range:
+            self.batch_logger.desc = f"Batch {epoch+1}: "
 
             randomize = np.arange(len(training_data))
             np.random.shuffle(randomize)
@@ -232,34 +176,18 @@ class Perceptron:
             targets = targets[randomize]
             results = np.empty(targets.shape)
 
-            for i, data in enumerate(training_data):
-                start_time = time.time()
+            batch_range = range(training_data.shape[0])
+            if self.logging == LoggingEnum.ALL:
+                batch_range = self.batch_logger(batch_range, position=1)
 
-                result = self.predict(data)
+            for i in batch_range:
+                result = self.predict(training_data[i], finalize=False)
                 results[i] = result
                 self.back_propagation_iteration(result, targets[i], learning_rate)
 
-                took_time = time.time() - start_time
-                one_epoch_took_time += took_time
-
-                took_time = (
-                    took_time if i != len(training_data) - 1 else one_epoch_took_time
-                )
-
-                accuracy = None
-                if i == training_data.shape[0] - 1:
-                    accuracy = accuracy_score(targets, results)
-
-                self.log_training_progress(
-                    i + 1, len(training_data), took_time=took_time, accuracy=accuracy
-                )
-
-            all_took_time += one_epoch_took_time
-            print("\n")
+                self.log_training_progress(i, targets, results, training_data)
 
         self.save_data = False
-
-        print(f"Training took: {all_took_time:.2f}s")
 
     def train(
         self,
