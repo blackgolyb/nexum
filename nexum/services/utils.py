@@ -3,7 +3,54 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+def get_clustered_space_splitter(nn, input_data):
+    w = nn.layers[-1].w
+    traces = []
+    bias = nn.layers[-1].bias
+    if nn.layers[-2].node_number == 2:
+        for i in range(w.shape[0]):
+            w_c = w[i]
+            k = -(w_c[0] / w_c[1])
+            b = -(bias[i] / w_c[1])
+
+            name = f"{i}: y = x{k:.4f} + {b:.4f}"
+
+            x = np.linspace(np.min(input_data[:, 0]), np.max(input_data[:, 0]), 2)
+            y = k * x + b
+            traces.append(go.Scatter(x=x, y=y, name=name))
+
+    elif nn.layers[-2].node_number == 3:
+        for i in range(w.shape[0]):
+            w_c = w[i]
+            k1 = -(w_c[0] / w_c[2])
+            k2 = -(w_c[1] / w_c[2])
+            b = -(bias[i] / w_c[2])
+
+            xmin, xmax = np.min(input_data[:, 0]), np.max(input_data[:, 0])
+            ymin, ymax = np.min(input_data[:, 1]), np.max(input_data[:, 1])
+
+            x, y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+
+            z = k1 * x + k2 * y + b
+
+            name = f"{i}: z = x{k1:.4f} + y{k2:.4f} + {b:.4f}"
+
+            traces.append(go.Surface(x=x, y=y, z=z, name=name))
+
+    return traces
+
+
 def get_clustered_space_image(nn, input_data, n=200, margins=None):
+    def lim(x):
+        return x >= 0.5
+
+    def get_color_function(color):
+        return lambda x, n: np.clip(
+            x * color / n,
+            0,
+            255,
+        )
+
     xmin = np.min(input_data[:, 0])
     xmax = np.max(input_data[:, 0])
     ymin = np.min(input_data[:, 1])
@@ -22,20 +69,11 @@ def get_clustered_space_image(nn, input_data, n=200, margins=None):
 
     size = (n, n)
 
-    def get_color_function(color):
-        return lambda x, n: np.clip(
-            x * color / n,
-            0,
-            255,
-        )
-
     colors = []
     out_n = nn.layers[-1].node_number
     for i in range(out_n):
         random_color = np.random.rand(3)
         colors.append(get_color_function(random_color))
-
-    lim = lambda x: x >= 0.5
 
     image = np.zeros((size[1], size[0], 3))
 
@@ -66,7 +104,6 @@ def get_scatters_clustered(nn, input_data):
     for i in range(input_data.shape[0]):
         result = nn.predict(input_data[i])
         result = limit(result)
-        print(f"data: {input_data[i]}  {result=}")
         results.append(result)
 
     c_points = []
