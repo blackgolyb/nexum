@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 
 
@@ -37,15 +36,18 @@ def test_activation_function_string_param():
     assert isinstance(layer.activation_function_obj, Sigmoid)
 
 
-def test_activation_function_lambda_param():
+def test_activation_function_lambda_param1():
+    is_error = False
     try:
-        layer = FullConnectedLayer(10, activation_function=(lambda x: x, lambda x: 1))
-    except CustomActivationFuncHasNoInitializationFuncError:
-        ...
-    assert isinstance(layer.activation_function_obj, Custom)
+        FullConnectedLayer(10, activation_function=(lambda x: x, lambda x: 1))
+    except CustomActivationFuncHasNoInitializationFuncError as e:
+        print(e)
+        is_error = True
+
+    assert is_error
 
 
-def test_activation_function_lambda_param():
+def test_activation_function_lambda_param2():
     layer = FullConnectedLayer(
         10,
         activation_function=(lambda x: x, lambda x: 1),
@@ -73,8 +75,10 @@ def test_initialization_function_str_param():
     assert layer.initialization_function == xavier_init
 
 
-def test_initialization_function_str_param():
-    init_func = lambda n, m: np.ones((n, m))
+def test_initialization_function_lambda_param():
+    def init_func(n, m):
+        return np.ones((n, m))
+
     layer = FullConnectedLayer(
         10,
         initialization_function=init_func,

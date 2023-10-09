@@ -65,7 +65,14 @@ class ReLu(ABCActivationFunction):
 
 
 class CustomActivationFuncHasNoInitializationFuncError(ValueError):
-    ...
+    message = (
+        "When you use own activation function "
+        "you must setup the initialization function by your self"
+    )
+
+    def __init__(self, message=None):
+        self.message = message or self.message
+        super().__init__(self.message)
 
 
 class Custom(ABCActivationFunction):
@@ -74,9 +81,7 @@ class Custom(ABCActivationFunction):
         self.derivation_of_activation_function = derivation_activation
 
     def get_best_init_functions(self) -> NoReturn:
-        raise CustomActivationFuncHasNoInitializationFuncError(
-            "When you use own activation function you must setup the initialization function by your self"
-        )
+        raise CustomActivationFuncHasNoInitializationFuncError()
 
     @staticmethod
     def activation_function(x):

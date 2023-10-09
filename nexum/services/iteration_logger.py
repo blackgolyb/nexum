@@ -56,7 +56,6 @@ class IterationLogger(object):
 
         self.i += 1
 
-        # self.time_start = time()
         return next(self._iterator)
 
     def __call__(self, iterator, *args, **kwargs):
@@ -85,7 +84,7 @@ class IterationLogger(object):
 
             try:
                 modules.append(module_factory(**module_data))
-            except:
+            except Exception:
                 ...
 
         modules_string = self.modules_separator.join(modules)
