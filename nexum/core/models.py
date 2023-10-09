@@ -108,19 +108,19 @@ class Perceptron:
         return values
 
     def predict(self, value, finalize=True):
-        self.layers[0].setup_input(value)
-        result = self.layers[-1].calculate()
+        result_data = value
+        for layer in self.layers:
+            result_data = layer.calculate(result_data)
 
         if finalize:
-            result = self.finalize(result)
+            result_data = self.finalize(result_data)
 
-        return result
+        return result_data
 
     def log_training_progress(self, i, targets, results, training_data):
         self.batch_logger.ds.accuracy = accuracy_score(
             targets[: i + 1], results[: i + 1]
         )
-        # self.batch_logger.ds.accuracy = i
 
     def back_propagation_iteration(self, results, target, learning_rate):
         layers_n = len(self.layers)
@@ -142,7 +142,6 @@ class Perceptron:
                         * next_layer.deltas
                         * current_layer.train_function(next_layer.nodes)
                     )
-                    # deltas[j] *=
 
                 current_layer.deltas = deltas
 

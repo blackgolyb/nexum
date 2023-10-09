@@ -118,14 +118,12 @@ class BaseLayer(ABCLayer):
         self.init_w()
 
     @abstractmethod
-    def calculate(self):
+    def calculate(self, input_nodes):
         raise NotImplementedError()
 
 
 class FullConnectedLayer(BaseLayer):
-    def calculate(self):
-        input_nodes = self.parent_layer.calculate()
-
+    def calculate(self, input_nodes):
         nodes = np.empty((self.node_number,))
         for i in range(self.node_number):
             signal = np.sum(input_nodes * self.w[i]) + self.bias[i]
@@ -151,10 +149,8 @@ class InputLayer(ABCLayer):
     def __init__(self, node_number: int):
         self.node_number = node_number
 
-    def setup_input(self, values):
-        self.nodes = values
-
-    def calculate(self):
+    def calculate(self, input_nodes):
+        self.nodes = input_nodes
         return self.nodes
 
     def connect_to_layer(self, layer: ABCLayer) -> NoReturn:
