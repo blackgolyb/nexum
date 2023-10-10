@@ -14,7 +14,7 @@ from nexum.core.initialization_functions import (
 class ActivationFunctions(str, Enum, metaclass=ContainsEnumMeta):
     SIGMOID = "sigmoid"
     HTAN = "htan"
-    RELU = "ReLu"
+    RELU = "relu"
 
 
 class ABCActivationFunction(ABC):
