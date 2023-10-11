@@ -1,5 +1,6 @@
-from nexum.services.iteration_logger import IterationLogger
 import time
+
+from nexum.services.iteration_logger import IterationLogger
 
 
 def test():

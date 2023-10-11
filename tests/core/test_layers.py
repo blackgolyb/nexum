@@ -1,20 +1,13 @@
 import numpy as np
 
-
-from nexum.core.layers import (
-    FullConnectedLayer,
-    OutputLayer,
-)
 from nexum.core.activation_functions import (
     ActivationFunctions,
-    Sigmoid,
     Custom,
     CustomActivationFuncHasNoInitializationFuncError,
+    Sigmoid,
 )
-from nexum.core.initialization_functions import (
-    InitializationFunctions,
-    xavier_init,
-)
+from nexum.core.initialization_functions import InitializationFunctions, xavier_init
+from nexum.core.layers import FullConnectedLayer, OutputLayer
 
 
 def test_default_creation():

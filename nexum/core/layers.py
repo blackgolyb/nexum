@@ -1,20 +1,20 @@
-from enum import Enum
-from typing import Self, Callable, Iterable, NoReturn
 from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Callable, Iterable, NoReturn, Self
 
 import numpy as np
 
-from nexum.services.enums import ContainsEnumMeta
 from nexum.core.activation_functions import (
-    ActivationFunctions,
     ABCActivationFunction,
-    get_activation_function_by_enum,
+    ActivationFunctions,
     Custom,
+    get_activation_function_by_enum,
 )
 from nexum.core.initialization_functions import (
     InitializationFunctions,
     get_initialization_function_by_enum,
 )
+from nexum.services.enums import ContainsEnumMeta
 
 
 class ABCLayer(ABC):

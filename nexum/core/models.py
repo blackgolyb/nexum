@@ -4,14 +4,14 @@ import numpy as np
 
 from nexum.core.layers import (
     BaseLayer,
+    ConnectionTypes,
+    FullConnectedLayer,
     InputLayer,
     OutputLayer,
-    FullConnectedLayer,
-    ConnectionTypes,
 )
-from nexum.services.utils import accuracy_score
 from nexum.services.enums import EnumMeta
 from nexum.services.iteration_logger import IterationLogger
+from nexum.services.utils import accuracy_score
 
 
 class WrongLayerTypeError(TypeError):

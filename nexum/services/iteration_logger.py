@@ -1,5 +1,5 @@
-from time import time
 import inspect
+from time import time
 
 from tqdm.auto import tqdm
 

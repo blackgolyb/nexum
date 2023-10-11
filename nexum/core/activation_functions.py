@@ -1,14 +1,14 @@
-from enum import Enum
 from abc import ABC, abstractstaticmethod
+from enum import Enum
 from typing import Callable, NoReturn
 
 import numpy as np
 
-from nexum.services.enums import ContainsEnumMeta
 from nexum.core.initialization_functions import (
     InitializationFunctions,
     get_initialization_function_by_enum,
 )
+from nexum.services.enums import ContainsEnumMeta
 
 
 class ActivationFunctions(str, Enum, metaclass=ContainsEnumMeta):

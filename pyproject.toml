@@ -17,6 +17,7 @@ tqdm = "^4.66.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
 ruff = "^0.0.292"
+isort = "^5.12.0"
 
 
 [tool.poetry.group.examples.dependencies]
@@ -29,6 +30,9 @@ nbformat = "^5.9.2"
 
 [tool.poetry.group.tests.dependencies]
 plotly = "^5.17.0"
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,8 +1,8 @@
 import numpy as np
 import plotly
 
-from nexum.core.models import Perceptron
 from nexum.core.layers import OutputLayer
+from nexum.core.models import Perceptron
 from nexum.services.utils import (
     get_clustered_space_image,
     get_clustered_space_splitter,
