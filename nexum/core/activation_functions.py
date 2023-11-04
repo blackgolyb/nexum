@@ -35,7 +35,34 @@ class ABCActivationFunction(ABC):
         return self.best_init_functions
 
 
-class Sigmoid(ABCActivationFunction):
+class BaseActivationFunction(ABCActivationFunction):
+    def calculate(self, input_data):
+        self.input = input_data
+        return self.activation_function(self.input)
+
+    def backward(self, output_gradient, learning_rate):
+        return np.multiply(
+            output_gradient,
+            self.derivation_of_activation_function(self.input),
+        )
+
+
+class Linear(BaseActivationFunction):
+    best_init_functions = [
+        get_initialization_function_by_enum(InitializationFunctions.XAVIER),
+        get_initialization_function_by_enum(InitializationFunctions.RANDOM_2),
+    ]
+
+    @staticmethod
+    def activation_function(x):
+        return x
+
+    @staticmethod
+    def derivation_of_activation_function(x):
+        return 1
+
+
+class Sigmoid(BaseActivationFunction):
     best_init_functions = [
         get_initialization_function_by_enum(InitializationFunctions.XAVIER),
         get_initialization_function_by_enum(InitializationFunctions.RANDOM_2),
@@ -47,10 +74,11 @@ class Sigmoid(ABCActivationFunction):
 
     @staticmethod
     def derivation_of_activation_function(x):
-        return x * (1 - x)
+        s = Sigmoid().activation_function(x)
+        return s * (1 - s)
 
 
-class ReLu(ABCActivationFunction):
+class ReLu(BaseActivationFunction):
     best_init_functions = [
         get_initialization_function_by_enum(InitializationFunctions.XAVIER),
     ]
@@ -75,7 +103,7 @@ class CustomActivationFuncHasNoInitializationFuncError(ValueError):
         super().__init__(self.message)
 
 
-class Custom(ABCActivationFunction):
+class Custom(BaseActivationFunction):
     def __init__(self, activation_function, derivation_activation):
         self.activation_function = activation_function
         self.derivation_of_activation_function = derivation_activation
