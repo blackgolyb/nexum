@@ -12,6 +12,7 @@ from nexum.services.enums import ContainsEnumMeta
 
 
 class ActivationFunctions(str, Enum, metaclass=ContainsEnumMeta):
+    LINEAR = "linear"
     SIGMOID = "sigmoid"
     HTAN = "htan"
     RELU = "relu"
@@ -121,6 +122,7 @@ class Custom(BaseActivationFunction):
 
 
 activation_function_by_enum = {
+    ActivationFunctions.LINEAR: Linear,
     ActivationFunctions.SIGMOID: Sigmoid,
     ActivationFunctions.RELU: ReLu,
 }
