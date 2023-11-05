@@ -3,8 +3,8 @@ from enum import Enum
 
 import numpy as np
 
-from nexum.services.iteration_logger import EpochLogger, SampleLogger
 from nexum.services.enums import EnumMeta
+from nexum.services.iteration_logger import EpochLogger, SampleLogger
 from nexum.services.utils import accuracy_score
 
 
