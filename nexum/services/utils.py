@@ -10,7 +10,7 @@ def get_clustered_space_splitter(nn, input_data):
         for i in range(w.shape[0]):
             w_c = w[i]
             k = -(w_c[0] / w_c[1])
-            b = -(bias[i] / w_c[1])
+            b = -(bias[i][0] / w_c[1])
 
             name = f"{i}: y = x{k:.4f} + {b:.4f}"
 
@@ -23,7 +23,7 @@ def get_clustered_space_splitter(nn, input_data):
             w_c = w[i]
             k1 = -(w_c[0] / w_c[2])
             k2 = -(w_c[1] / w_c[2])
-            b = -(bias[i] / w_c[2])
+            b = -(bias[i][0] / w_c[2])
 
             xmin, xmax = np.min(input_data[:, 0]), np.max(input_data[:, 0])
             ymin, ymax = np.min(input_data[:, 1]), np.max(input_data[:, 1])
@@ -135,13 +135,12 @@ def get_scatters_clustered(nn, input_data):
     return traces
 
 
-def accuracy_score(a, b, normalize=True):
+def accuracy_score(real, predicted, normalize=True):
     acc = 0
-
-    for i in range(a.shape[0]):
-        acc += np.allclose(a[i], b[i])
+    for i in range(len(real)):
+        acc += np.array_equal(real[i], predicted[i])
 
     if normalize:
-        acc /= a.shape[0]
+        acc /= len(real)
 
     return acc
