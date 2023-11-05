@@ -45,13 +45,32 @@ class EpochLogger(IterationLogger):
 
 
 class Perceptron:
-    logging = LoggingEnum.EPOCHS
-
-    def __init__(self, layers_config: list[int | BaseLayer]):
+    def __init__(
+        self, layers_config: list[int | BaseLayer], logging=LoggingEnum.EPOCHS
+    ):
         self.layers: list[int | BaseLayer]
         self.batch_logger = BatchLogger()
         self.epoch_logger = EpochLogger()
         self._init_layers(layers_config)
+        self.logging = logging
+
+    @property
+    def logging(self) -> LoggingEnum:
+        return self._logging
+
+    @logging.setter
+    def logging(self, value: LoggingEnum) -> None:
+        self._logging = value
+
+        if self._logging == LoggingEnum.EPOCHS:
+            self.epoch_logger.logging = True
+            self.batch_logger.logging = False
+        elif self.logging == LoggingEnum.ALL:
+            self.epoch_logger.logging = True
+            self.batch_logger.logging = True
+        else:
+            self.epoch_logger.logging = False
+            self.batch_logger.logging = False
 
     @property
     def w(self):
@@ -173,7 +192,7 @@ class Perceptron:
             epoch_range = self.epoch_logger(epoch_range, position=0)
 
         for epoch in epoch_range:
-            self.batch_logger.desc = f"Batch {epoch+1}: "
+            # self.batch_logger.desc = f"Batch {epoch+1}: "
 
             randomize = np.arange(len(training_data))
             np.random.shuffle(randomize)
@@ -201,9 +220,18 @@ class Perceptron:
         training_data = np.reshape(training_data, (*training_data.shape, 1))
         targets = np.reshape(targets, (*targets.shape, 1))
 
-        for e in range(epochs):
+        epoch_range = self.epoch_logger(range(epochs), position=0)
+
+        for e in epoch_range:
             # error = 0
-            for x, y in zip(training_data, targets):
+
+            batch_range = self.batch_logger(range(training_data.shape[0]), position=1)
+
+            for i in batch_range:
+                # data
+                x = training_data[i]
+                y = targets[i]
+
                 # forward
                 output = self.predict(x, train=True)
 
@@ -211,12 +239,7 @@ class Perceptron:
                 # error += loss(y, output)
 
                 # backward
-                # print(training_data, targets)
-                # print(x, y, output)
-                # print(f"{y=}")
-                # print(f"{output=}")
                 grad = mse_prime(y, output)
-                # print(f"{grad=}")
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad, learning_rate)
 

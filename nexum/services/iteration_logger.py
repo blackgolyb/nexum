@@ -28,6 +28,7 @@ class IterationLogger(object):
         default_modules = {"time": self.took_time}
         self.modules = modules or default_modules
         self.ds = DataStorage()
+        self.logging = True
 
     def __len__(self):
         return self._n
@@ -59,6 +60,9 @@ class IterationLogger(object):
         return next(self._iterator)
 
     def __call__(self, iterator, *args, **kwargs):
+        if not self.logging:
+            return iterator
+
         number_of_iterations = None
 
         if hasattr(iterator, "__len__"):
