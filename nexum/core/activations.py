@@ -4,7 +4,7 @@ from typing import Callable, NoReturn
 
 import numpy as np
 
-from nexum.core.initialization_functions import (
+from nexum.core.initializations import (
     InitializationFunctions,
     get_initialization_function_by_enum,
 )

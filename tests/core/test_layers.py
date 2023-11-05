@@ -1,12 +1,12 @@
 import numpy as np
 
-from nexum.core.activation_functions import (
+from nexum.core.activations import (
     ActivationFunctions,
     Custom,
     CustomActivationFuncHasNoInitializationFuncError,
     Sigmoid,
 )
-from nexum.core.initialization_functions import InitializationFunctions, xavier_init
+from nexum.core.initializations import InitializationFunctions, xavier_init
 from nexum.core.layers import FullConnectedLayer, OutputLayer
 
 
@@ -95,7 +95,7 @@ def test_layers_connecting():
 def test_bias_default_connecting():
     layer = FullConnectedLayer(10)
 
-    assert layer.bias.shape == (10,)
+    assert layer.bias.shape == (10, 1)
 
 
 def test_output_layer():

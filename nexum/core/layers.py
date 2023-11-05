@@ -4,13 +4,13 @@ from typing import Callable, Iterable, NoReturn, Self
 
 import numpy as np
 
-from nexum.core.activation_functions import (
+from nexum.core.activations import (
     ABCActivationFunction,
     ActivationFunctions,
     Custom,
     get_activation_function_by_enum,
 )
-from nexum.core.initialization_functions import (
+from nexum.core.initializations import (
     InitializationFunctions,
     get_initialization_function_by_enum,
 )
@@ -149,13 +149,19 @@ class FullConnectedLayer(BaseLayer):
 
 
 class PairConnectedLayer(BaseLayer):
-    def calculate(self):
+    def calculate(self, input_nodes):
         print("2")
+
+    def backward(self, output_gradient, learning_rate):
+        ...
 
 
 class TripleConnectedLayer(BaseLayer):
-    def calculate(self):
+    def calculate(self, input_nodes):
         print("3")
+
+    def backward(self, output_gradient, learning_rate):
+        ...
 
 
 class InputLayer(ABCLayer):
