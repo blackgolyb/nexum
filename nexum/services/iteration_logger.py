@@ -93,3 +93,49 @@ class IterationLogger(object):
 
         modules_string = self.modules_separator.join(modules)
         return modules_string
+
+
+class SampleLogger(IterationLogger):
+    modules_separator = " - "
+
+    def __init__(self):
+        modules = {
+            "took_time": self.took_time,
+            # "accuracy": self.accuracy,
+            "error": self.error,
+        }
+
+        super().__init__(modules=modules)
+
+    @staticmethod
+    def error(error):
+        return f"error: {error:.5f}"
+
+    @staticmethod
+    def accuracy(accuracy):
+        return f"accuracy: {accuracy:.5f}"
+
+    def set_sample_n(self, n: int) -> None:
+        self.desc = f"Sample {n}: "
+
+
+class EpochLogger(IterationLogger):
+    desc = "Epochs: "
+    modules_separator = " - "
+
+    def __init__(self):
+        modules = {
+            "took_time": self.took_time,
+            "error": self.error,
+            "accuracy": self.accuracy,
+        }
+
+        super().__init__(modules=modules)
+
+    @staticmethod
+    def error(error):
+        return f"error: {error:.5f}"
+
+    @staticmethod
+    def accuracy(accuracy):
+        return f"accuracy: {accuracy:.5f}"

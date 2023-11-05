@@ -42,7 +42,7 @@ def test_backprop():
         ]
     )
 
-    nn.train(input_data, targets, epochs=5000, learning_rate=0.1)
+    nn.train(input_data, targets, epochs=10000, learning_rate=0.1)
 
     image = get_clustered_space_image(nn, input_data)
     traces = get_scatters_clustered(nn, input_data)
