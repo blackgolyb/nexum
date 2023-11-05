@@ -128,7 +128,7 @@ class Perceptron:
 
     def predict(self, value, train=False, finalize=True):
         if not train:
-            value = np.resize(value, (*value.shape, 1))
+            value = np.reshape(value, (*value.shape, 1))
 
         result_data = value
         for layer in self.layers:
@@ -138,7 +138,7 @@ class Perceptron:
             result_data = self.finalize(result_data)
 
         if not train:
-            return np.resize(result_data, result_data.shape[:-1])
+            return np.reshape(result_data, result_data.shape[:-1])
 
         return result_data
 
