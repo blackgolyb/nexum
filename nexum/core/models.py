@@ -25,24 +25,49 @@ class LoggingEnum(Enum, metaclass=EnumMeta):
     OFF = "off"
 
 
-class BatchLogger(IterationLogger):
+class SampleLogger(IterationLogger):
     modules_separator = " - "
 
     def __init__(self):
         modules = {
             "took_time": self.took_time,
+            # "accuracy": self.accuracy,
+            "error": self.error,
+        }
+
+        super().__init__(modules=modules)
+
+    @staticmethod
+    def error(error):
+        return f"error: {error:.5f}"
+
+    @staticmethod
+    def accuracy(accuracy):
+        return f"accuracy: {accuracy:.5f}"
+
+    def set_sample_n(self, n: int) -> None:
+        self.desc = f"Sample {n}: "
+
+
+class EpochLogger(IterationLogger):
+    desc = "Epochs: "
+    modules_separator = " - "
+
+    def __init__(self):
+        modules = {
+            "error": self.error,
             "accuracy": self.accuracy,
         }
 
         super().__init__(modules=modules)
 
     @staticmethod
+    def error(error):
+        return f"error: {error:.5f}"
+
+    @staticmethod
     def accuracy(accuracy):
         return f"accuracy: {accuracy:.5f}"
-
-
-class EpochLogger(IterationLogger):
-    desc = "Epochs: "
 
 
 class Perceptron:
@@ -53,7 +78,7 @@ class Perceptron:
         loss=Losses.MSE,
     ):
         self.layers: list[int | BaseLayer]
-        self.batch_logger = BatchLogger()
+        self.sample_logger = SampleLogger()
         self.epoch_logger = EpochLogger()
         self._init_layers(layers_config)
         self._init_loss(loss)
@@ -69,13 +94,13 @@ class Perceptron:
 
         if self._logging == LoggingEnum.EPOCHS:
             self.epoch_logger.logging = True
-            self.batch_logger.logging = False
+            self.sample_logger.logging = False
         elif self.logging == LoggingEnum.ALL:
             self.epoch_logger.logging = True
-            self.batch_logger.logging = True
+            self.sample_logger.logging = True
         else:
             self.epoch_logger.logging = False
-            self.batch_logger.logging = False
+            self.sample_logger.logging = False
 
     @property
     def w(self):
@@ -151,7 +176,7 @@ class Perceptron:
         return result_data
 
     def log_training_progress(self, i, targets, results, training_data):
-        self.batch_logger.ds.accuracy = accuracy_score(
+        self.sample_logger.ds.accuracy = accuracy_score(
             targets[: i + 1], results[: i + 1]
         )
 
@@ -200,7 +225,7 @@ class Perceptron:
             epoch_range = self.epoch_logger(epoch_range, position=0)
 
         for epoch in epoch_range:
-            # self.batch_logger.desc = f"Batch {epoch+1}: "
+            # self.sample_logger.desc = f"Sample {epoch+1}: "
 
             randomize = np.arange(len(training_data))
             np.random.shuffle(randomize)
@@ -208,11 +233,11 @@ class Perceptron:
             targets = targets[randomize]
             results = np.empty(targets.shape)
 
-            batch_range = range(training_data.shape[0])
+            sample_range = range(training_data.shape[0])
             if self.logging == LoggingEnum.ALL:
-                batch_range = self.batch_logger(batch_range, position=1)
+                sample_range = self.sample_logger(sample_range, position=1)
 
-            for i in batch_range:
+            for i in sample_range:
                 result = self.predict(training_data[i], finalize=False)
                 results[i] = result
                 self.back_propagation_iteration(result, targets[i], learning_rate)
@@ -227,18 +252,19 @@ class Perceptron:
 
         epoch_range = self.epoch_logger(range(epochs), position=0)
 
-        for e in epoch_range:
+        for epoch in epoch_range:
             error = 0
 
-            batch_range = self.batch_logger(range(training_data.shape[0]), position=1)
+            sample_range = self.sample_logger(range(training_data.shape[0]), position=1)
+            self.sample_logger.set_sample_n(epoch + 1)
 
-            for i in batch_range:
+            for i in sample_range:
                 # data
                 x = training_data[i]
                 y = targets[i]
 
                 # forward
-                output = self.predict(x, train=True)
+                output = self.predict(x, train=True, finalize=False)
 
                 # error
                 error += self.loss(y, output)
@@ -248,10 +274,14 @@ class Perceptron:
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad, learning_rate)
 
-            # return
-            # error /= len(x_train)
-            # if verbose:
-            # print(f"{e + 1}/{epochs}")
+                # add data to sample_logger to display current training parameters
+                self.sample_logger.ds.error = error / (i + 1)
+
+            # add data to epoch_logger to display current training parameters
+            self.epoch_logger.ds.error = error / training_data.shape[0]
+            self.epoch_logger.ds.accuracy = accuracy_score(
+                targets, self.predict(training_data, train=True)
+            )
 
     def train(
         self,

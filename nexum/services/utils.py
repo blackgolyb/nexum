@@ -135,13 +135,12 @@ def get_scatters_clustered(nn, input_data):
     return traces
 
 
-def accuracy_score(a, b, normalize=True):
+def accuracy_score(real, predicted, normalize=True):
     acc = 0
-
-    for i in range(a.shape[0]):
-        acc += np.allclose(a[i], b[i])
+    for i in range(len(real)):
+        acc += np.array_equal(real[i], predicted[i])
 
     if normalize:
-        acc /= a.shape[0]
+        acc /= len(real)
 
     return acc

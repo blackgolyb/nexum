@@ -15,6 +15,7 @@ def test_backprop():
 
     o_l = OutputLayer(1)
     nn = Perceptron(layers_config=[2, o_l])
+    nn.finalize = np.vectorize(lambda x: 0 if x <= 0.5 else 1)
 
     input_data = np.array(
         [
