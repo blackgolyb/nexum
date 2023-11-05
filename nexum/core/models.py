@@ -107,13 +107,19 @@ class Perceptron:
     def finalize(self, values):
         return values
 
-    def predict(self, value, finalize=True):
+    def predict(self, value, train=False, finalize=True):
+        if not train:
+            value = np.resize(value, (*value.shape, 1))
+
         result_data = value
         for layer in self.layers:
             result_data = layer.calculate(result_data)
 
         if finalize:
             result_data = self.finalize(result_data)
+
+        if not train:
+            return np.resize(result_data, result_data.shape[:-1])
 
         return result_data
 
@@ -188,6 +194,37 @@ class Perceptron:
 
         self.save_data = False
 
+    def new_trainer(self, training_data, targets, learning_rate, epochs):
+        def mse_prime(y_true, y_pred):
+            return 2 * (y_pred - y_true) / np.size(y_true)
+
+        training_data = np.reshape(training_data, (*training_data.shape, 1))
+        targets = np.reshape(targets, (*targets.shape, 1))
+
+        for e in range(epochs):
+            # error = 0
+            for x, y in zip(training_data, targets):
+                # forward
+                output = self.predict(x, train=True)
+
+                # error
+                # error += loss(y, output)
+
+                # backward
+                # print(training_data, targets)
+                # print(x, y, output)
+                # print(f"{y=}")
+                # print(f"{output=}")
+                grad = mse_prime(y, output)
+                # print(f"{grad=}")
+                for layer in reversed(self.layers):
+                    grad = layer.backward(grad, learning_rate)
+
+            # return
+            # error /= len(x_train)
+            # if verbose:
+            # print(f"{e + 1}/{epochs}")
+
     def train(
         self,
         training_data,
@@ -198,6 +235,6 @@ class Perceptron:
     ):
         match algorithm:
             case "back_propagation":
-                self.back_propagation(training_data, targets, learning_rate, epochs)
+                self.new_trainer(training_data, targets, learning_rate, epochs)
             case _:
                 self.back_propagation(training_data, targets, learning_rate, epochs)

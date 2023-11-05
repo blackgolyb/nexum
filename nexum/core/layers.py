@@ -52,7 +52,7 @@ class BaseLayer(ABCLayer):
         if bias is None:
             self.bias = None
         elif isinstance(bias, int):
-            self.bias = self.initialization_function(self.node_number, 1)[:, 0]
+            self.bias = self.initialization_function(self.node_number, 1)
         elif isinstance(bias, np.array):
             self.bias = bias
 
@@ -121,18 +121,31 @@ class BaseLayer(ABCLayer):
     def calculate(self, input_nodes):
         raise NotImplementedError()
 
+    @abstractmethod
+    def backward(self, output_gradient, learning_rate):
+        raise NotImplementedError()
+
 
 class FullConnectedLayer(BaseLayer):
     def calculate(self, input_nodes):
-        nodes = np.empty((self.node_number,))
-        for i in range(self.node_number):
-            signal = np.sum(input_nodes * self.w[i]) + self.bias[i]
-            nodes[i] = self.activation_function(signal)
+        self.input = input_nodes
+        signal = self.w @ self.input + self.bias
+        result = self.activation_function_obj.calculate(signal)
 
-        if self.save_data:
-            self.nodes = nodes
+        return result
 
-        return nodes
+    def backward(self, output_gradient, learning_rate):
+        output_gradient = self.activation_function_obj.backward(
+            output_gradient, learning_rate
+        )
+
+        weights_gradient = output_gradient @ self.input.T
+        input_gradient = self.w.T @ output_gradient
+
+        self.w -= learning_rate * weights_gradient
+        self.bias -= learning_rate * output_gradient[0]
+
+        return input_gradient
 
 
 class PairConnectedLayer(BaseLayer):
@@ -155,6 +168,9 @@ class InputLayer(ABCLayer):
 
     def connect_to_layer(self, layer: ABCLayer) -> NoReturn:
         raise RuntimeError("Can not connect input layer to another")
+
+    def backward(self, output_gradient, learning_rate):
+        ...
 
 
 class ConnectionTypes(str, Enum, metaclass=ContainsEnumMeta):
