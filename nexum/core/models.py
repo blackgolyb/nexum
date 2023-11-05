@@ -2,6 +2,7 @@ from enum import Enum
 
 import numpy as np
 
+from nexum.core.losses import ABCLoss, get_loss_by_enum, Losses
 from nexum.core.layers import (
     BaseLayer,
     ConnectionTypes,
@@ -46,12 +47,16 @@ class EpochLogger(IterationLogger):
 
 class Perceptron:
     def __init__(
-        self, layers_config: list[int | BaseLayer], logging=LoggingEnum.EPOCHS
+        self,
+        layers_config: list[int | BaseLayer],
+        logging=LoggingEnum.EPOCHS,
+        loss=Losses.MSE,
     ):
         self.layers: list[int | BaseLayer]
         self.batch_logger = BatchLogger()
         self.epoch_logger = EpochLogger()
         self._init_layers(layers_config)
+        self._init_loss(loss)
         self.logging = logging
 
     @property
@@ -80,6 +85,9 @@ class Perceptron:
             w.append(self.layers[i + 1].w)
 
         return w
+
+    def _init_loss(self, loss: Losses):
+        self.loss: ABCLoss = get_loss_by_enum(loss)
 
     def _init_layers(self, config: list[int | BaseLayer]):
         self.layers = []
@@ -214,16 +222,13 @@ class Perceptron:
         self.save_data = False
 
     def new_trainer(self, training_data, targets, learning_rate, epochs):
-        def mse_prime(y_true, y_pred):
-            return 2 * (y_pred - y_true) / np.size(y_true)
-
         training_data = np.reshape(training_data, (*training_data.shape, 1))
         targets = np.reshape(targets, (*targets.shape, 1))
 
         epoch_range = self.epoch_logger(range(epochs), position=0)
 
         for e in epoch_range:
-            # error = 0
+            error = 0
 
             batch_range = self.batch_logger(range(training_data.shape[0]), position=1)
 
@@ -236,10 +241,10 @@ class Perceptron:
                 output = self.predict(x, train=True)
 
                 # error
-                # error += loss(y, output)
+                error += self.loss(y, output)
 
                 # backward
-                grad = mse_prime(y, output)
+                grad = self.loss.derivation(y, output)
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad, learning_rate)
 
