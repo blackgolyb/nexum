@@ -84,7 +84,9 @@ class GradientTrainer(ABCTrainer):
                 self.sample_logger.ds.error = error / (i + 1)
 
             # add data to epoch_logger to display current training parameters
+            predicted_data = np.empty(targets.shape)
+            for i in range(targets.shape[0]):
+                predicted_data[i] = nn.predict(training_data[i], train=True)
+
             self.epoch_logger.ds.error = error / training_data.shape[0]
-            self.epoch_logger.ds.accuracy = accuracy_score(
-                targets, nn.predict(training_data, train=True)
-            )
+            self.epoch_logger.ds.accuracy = accuracy_score(targets, predicted_data)

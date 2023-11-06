@@ -16,6 +16,7 @@ class ActivationFunctions(str, Enum, metaclass=ContainsEnumMeta):
     SIGMOID = "sigmoid"
     HTAN = "htan"
     RELU = "relu"
+    SOFTMAX = "softmax"
 
 
 class ABCActivationFunction(ABC):
@@ -93,6 +94,30 @@ class ReLu(BaseActivationFunction):
         return np.vectorize(lambda x: 0 if x < 0 else 1)(x)
 
 
+class Softmax(BaseActivationFunction):
+    best_init_functions = [
+        get_initialization_function_by_enum(InitializationFunctions.XAVIER),
+        get_initialization_function_by_enum(InitializationFunctions.RANDOM_2),
+    ]
+
+    @staticmethod
+    def activation_function(x):
+        ...
+
+    @staticmethod
+    def derivation_of_activation_function(x):
+        ...
+
+    def calculate(self, input_nodes):
+        tmp = np.exp(input_nodes)
+        self.output = tmp / np.sum(tmp)
+        return self.output
+
+    def backward(self, output_gradient, learning_rate):
+        n = np.size(self.output)
+        return np.dot((np.identity(n) - self.output.T) * self.output, output_gradient)
+
+
 class CustomActivationFuncHasNoInitializationFuncError(ValueError):
     message = (
         "When you use own activation function "
@@ -125,36 +150,9 @@ activation_function_by_enum = {
     ActivationFunctions.LINEAR: Linear,
     ActivationFunctions.SIGMOID: Sigmoid,
     ActivationFunctions.RELU: ReLu,
+    ActivationFunctions.SOFTMAX: Softmax,
 }
 
 
 def get_activation_function_by_enum(enum_val: InitializationFunctions):
     return activation_function_by_enum[enum_val]()
-
-
-def Softmax_grad(x):  # Best implementation (VERY FAST)
-    """Returns the jacobian of the Softmax function for the given set of inputs.
-    Inputs:
-    x: should be a 2d array where the rows correspond to the samples
-        and the columns correspond to the nodes.
-    Returns: jacobian
-    """
-    s = Softmax(x)
-    a = np.eye(s.shape[-1])
-    temp1 = np.zeros((s.shape[0], s.shape[1], s.shape[1]), dtype=np.float32)
-    temp2 = np.zeros((s.shape[0], s.shape[1], s.shape[1]), dtype=np.float32)
-    temp1 = np.einsum("ij,jk->ijk", s, a)
-    temp2 = np.einsum("ij,ik->ijk", s, s)
-    return temp1 - temp2
-
-
-def Softmax(x):
-    """
-    Performs the softmax activation on a given set of inputs
-    Input: x (N,k) ndarray (N: no. of samples, k: no. of nodes)
-    Returns:
-    Note: Works for 2D arrays only(rows for samples, columns for nodes/outputs)
-    """
-    max_x = np.amax(x, 1).reshape(x.shape[0], 1)  # Get the row-wise maximum
-    e_x = np.exp(x - max_x)  # For stability
-    return e_x / e_x.sum(axis=1, keepdims=True)

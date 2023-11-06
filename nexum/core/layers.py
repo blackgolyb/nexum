@@ -87,7 +87,7 @@ class BaseLayer(ABCLayer):
             raise ValueError()
 
         self.activation_function_obj = function_obj
-        self.activation_function, self.train_function = function_obj.get_functions()
+        # self.activation_function, self.train_function = function_obj.get_functions()
 
     def __init_initialization_function(self, initialization_function):
         function: Callable | None = None
