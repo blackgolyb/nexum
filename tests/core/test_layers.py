@@ -7,32 +7,32 @@ from nexum.core.activations import (
     Sigmoid,
 )
 from nexum.core.initializations import InitializationFunctions, xavier_init
-from nexum.core.layers import FullConnectedLayer, OutputLayer
+from nexum.core.layers import Dense, OutputLayer
 
 
 def test_default_creation():
-    FullConnectedLayer(10)
+    Dense(10)
 
 
 def test_activation_function_enum_param():
-    layer = FullConnectedLayer(10, activation_function=ActivationFunctions.SIGMOID)
+    layer = Dense(10, activation_function=ActivationFunctions.SIGMOID)
     assert isinstance(layer.activation_function_obj, Sigmoid)
 
 
 def test_activation_function_obj_param():
-    layer = FullConnectedLayer(10, activation_function=Sigmoid())
+    layer = Dense(10, activation_function=Sigmoid())
     assert isinstance(layer.activation_function_obj, Sigmoid)
 
 
 def test_activation_function_string_param():
-    layer = FullConnectedLayer(10, activation_function="sigmoid")
+    layer = Dense(10, activation_function="sigmoid")
     assert isinstance(layer.activation_function_obj, Sigmoid)
 
 
 def test_activation_function_lambda_param1():
     is_error = False
     try:
-        FullConnectedLayer(10, activation_function=(lambda x: x, lambda x: 1))
+        Dense(10, activation_function=(lambda x: x, lambda x: 1))
     except CustomActivationFuncHasNoInitializationFuncError as e:
         print(e)
         is_error = True
@@ -41,7 +41,7 @@ def test_activation_function_lambda_param1():
 
 
 def test_activation_function_lambda_param2():
-    layer = FullConnectedLayer(
+    layer = Dense(
         10,
         activation_function=(lambda x: x, lambda x: 1),
         initialization_function=InitializationFunctions.RANDOM_1,
@@ -51,7 +51,7 @@ def test_activation_function_lambda_param2():
 
 
 def test_initialization_function_enum_param():
-    layer = FullConnectedLayer(
+    layer = Dense(
         10,
         initialization_function=InitializationFunctions.XAVIER,
     )
@@ -60,7 +60,7 @@ def test_initialization_function_enum_param():
 
 
 def test_initialization_function_str_param():
-    layer = FullConnectedLayer(
+    layer = Dense(
         10,
         initialization_function="xavier",
     )
@@ -72,7 +72,7 @@ def test_initialization_function_lambda_param():
     def init_func(n, m):
         return np.ones((n, m))
 
-    layer = FullConnectedLayer(
+    layer = Dense(
         10,
         initialization_function=init_func,
     )
@@ -81,10 +81,8 @@ def test_initialization_function_lambda_param():
 
 
 def test_layers_connecting():
-    layer1 = FullConnectedLayer(10)
-    layer2 = FullConnectedLayer(
-        5, initialization_function=lambda n, m: np.full((n, m), 1)
-    )
+    layer1 = Dense(10)
+    layer2 = Dense(5, initialization_function=lambda n, m: np.full((n, m), 1))
 
     layer2.connect_to_layer(layer1)
 
@@ -93,13 +91,13 @@ def test_layers_connecting():
 
 
 def test_bias_default_connecting():
-    layer = FullConnectedLayer(10)
+    layer = Dense(10)
 
     assert layer.bias.shape == (10, 1)
 
 
 def test_output_layer():
-    o1 = OutputLayer(10, connection_type="full_connected")
+    o1 = OutputLayer(10, connection_type="dense")
     o2 = OutputLayer(10, connection_type="pair_connected")
     o3 = OutputLayer(10, connection_type="triple_connected")
 

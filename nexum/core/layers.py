@@ -126,7 +126,7 @@ class BaseLayer(ABCLayer):
         raise NotImplementedError()
 
 
-class FullConnectedLayer(BaseLayer):
+class Dense(BaseLayer):
     def calculate(self, input_nodes):
         self.input = input_nodes
         signal = self.w @ self.input + self.bias
@@ -180,7 +180,7 @@ class InputLayer(ABCLayer):
 
 
 class ConnectionTypes(str, Enum, metaclass=ContainsEnumMeta):
-    FULL_CONNECTED = "full_connected"
+    DENSE = "dense"
     PAIR_CONNECTED = "pair_connected"
     TRIPLE_CONNECTED = "triple_connected"
 
@@ -191,7 +191,7 @@ class ABCOutputLayer(BaseLayer):
 
 class OutputLayer(object):
     connection_type_to_cls = {
-        ConnectionTypes.FULL_CONNECTED: FullConnectedLayer,
+        ConnectionTypes.DENSE: Dense,
         ConnectionTypes.PAIR_CONNECTED: PairConnectedLayer,
         ConnectionTypes.TRIPLE_CONNECTED: TripleConnectedLayer,
     }
@@ -199,7 +199,7 @@ class OutputLayer(object):
     def __new__(
         cls,
         *args,
-        connection_type=ConnectionTypes.FULL_CONNECTED,
+        connection_type=ConnectionTypes.DENSE,
         **kwargs,
     ) -> Self:
         output_cls = cls.create_output_cls(connection_type)

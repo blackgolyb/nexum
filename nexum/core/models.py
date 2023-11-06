@@ -3,7 +3,7 @@ import numpy as np
 from nexum.core.layers import (
     BaseLayer,
     ConnectionTypes,
-    FullConnectedLayer,
+    Dense,
     InputLayer,
     OutputLayer,
 )
@@ -15,7 +15,7 @@ class WrongLayerTypeError(TypeError):
     ...
 
 
-class Perceptron:
+class Sequential:
     def __init__(
         self,
         layers_config: list[int | BaseLayer],
@@ -51,34 +51,18 @@ class Perceptron:
     def _init_layers(self, config: list[int | BaseLayer]):
         self.layers = []
 
-        def get_layer_cls(*args, **kwargs):
-            return OutputLayer(
-                *args, connection_type=ConnectionTypes.FULL_CONNECTED, **kwargs
-            )
-
         for i, item in enumerate(config):
-            if i == 0:
-                layer_cls = InputLayer
-            elif i == len(config) - 1:
-                layer_cls = get_layer_cls
-            else:
-                layer_cls = FullConnectedLayer
-
-            if isinstance(item, int):
-                layer = layer_cls(item)
-            elif isinstance(item, BaseLayer):
-                layer = item
-            else:
+            if not isinstance(item, BaseLayer):
                 raise WrongLayerTypeError(
-                    f"Layer {i} has wrong type must be int or Layer type."
+                    f"Layer {i} has wrong type must be Layer type."
                 )
 
-            self.layers.append(layer)
+            self.layers.append(item)
 
             if i == 0:
                 continue
 
-            layer.connect_to_layer(self.layers[i - 1])
+            item.connect_to_layer(self.layers[i - 1])
 
     @property
     def save_data(self):
@@ -113,3 +97,35 @@ class Perceptron:
         self.trainer.train(
             training_data, targets, learning_rate, epochs, nn=self, loss=self.loss
         )
+
+
+class Perceptron(Sequential):
+    def _init_layers(self, config: list[int | BaseLayer]):
+        self.layers = []
+
+        def get_layer_cls(*args, **kwargs):
+            return OutputLayer(*args, connection_type=ConnectionTypes.DENSE, **kwargs)
+
+        for i, item in enumerate(config):
+            if i == 0:
+                layer_cls = InputLayer
+            elif i == len(config) - 1:
+                layer_cls = get_layer_cls
+            else:
+                layer_cls = Dense
+
+            if isinstance(item, int):
+                layer = layer_cls(item)
+            elif isinstance(item, BaseLayer):
+                layer = item
+            else:
+                raise WrongLayerTypeError(
+                    f"Layer {i} has wrong type must be int or Layer type."
+                )
+
+            self.layers.append(layer)
+
+            if i == 0:
+                continue
+
+            layer.connect_to_layer(self.layers[i - 1])
