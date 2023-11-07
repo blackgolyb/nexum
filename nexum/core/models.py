@@ -1,12 +1,7 @@
+import h5py
 import numpy as np
 
-from nexum.core.layers import (
-    BaseLayer,
-    ConnectionTypes,
-    Dense,
-    InputLayer,
-    OutputLayer,
-)
+from nexum.core.layers import BaseLayer, ConnectionTypes, Dense, InputLayer, OutputLayer
 from nexum.core.losses import ABCLoss, Losses, get_loss_by_enum
 from nexum.core.trainer import GradientTrainer, LoggingEnum
 
@@ -15,7 +10,26 @@ class WrongLayerTypeError(TypeError):
     ...
 
 
-class Sequential:
+class ABCModel:
+    def __init__(self):
+        ...
+
+    def save(self, filename):
+        with h5py.File(filename, "w") as hf:
+            for i, layer in enumerate(self.layers[1:]):
+                group = hf.create_group(f"layer_{i+1}")
+                group.create_dataset("bias", data=layer.bias)
+                group.create_dataset("weights", data=layer.w)
+
+    def load(self, filename):
+        with h5py.File(filename, "r") as hf:
+            for i, layer in enumerate(self.layers[1:]):
+                group = hf[f"layer_{i+1}"]
+                layer.bias = group["bias"][:]
+                layer.w = group["weights"][:]
+
+
+class Sequential(ABCModel):
     def __init__(
         self,
         layers_config: list[int | BaseLayer],

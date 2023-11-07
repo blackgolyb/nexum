@@ -63,8 +63,6 @@ def test_softmax():
 
     X = iris["data"]
     y = iris["target"]
-    names = iris["target_names"]
-    feature_names = iris["feature_names"]
     y = one_hot(y)
 
     t_x, t_y = get_training_data(X, y, training_size)
